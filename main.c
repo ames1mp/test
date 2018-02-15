@@ -49,8 +49,7 @@ int main() {
     pid_t childrenIds[MAX_CHILDREN] = {0};
 
     char query[SIZE];
-    char results[MAX_CHILDREN];
-
+    
     parentId = getpid();
 
     //signal(SIGINT, sigHandler);
@@ -84,7 +83,9 @@ int main() {
     //fork and exec children
      for(int i = 0; i < numFiles; ++i) {
         
+        fflush(stdout);
         printf("Parent: Spawning a process to scan the file: %s\n", fileTokens[i]);
+        fflush(stdout);
         
         pid = fork();
     
@@ -110,7 +111,7 @@ int main() {
             sprintf(childWritePipe, "%d", parentReadFds[i][WRITE]);
             
             char childNo[SIZE];
-            sprintf(childNo, "%s", i);
+            sprintf(childNo, "%d", i);
             
             char* args[] = {CHILD_EXECUTABLE_PATH, fileTokens[i], childReadPipe, childWritePipe, childNo, NULL};
             execv(args[0], args);
@@ -123,36 +124,36 @@ int main() {
         close(parentWriteFds[i][READ]);
     }
     
-    sleep(5);
+    sleep(1);
     printf("Enter your search word: ");
     fgets(query, SIZE, stdin);
 
-    char buffer[SIZE]
+    char buffer[SIZE];
     
     //write query to children
     for(int i = 0; i < numFiles; ++i) {
+        fflush(stdout);
         printf("Parent: Sending query to child %d\n", i);
         fflush(stdout);
         write(parentWriteFds[i][WRITE], "HELLO WORLD", SIZE);
     }
     
-    for(int i = 0; i < numFiles; ++i) {
-        
-        while ( read(parentReadFds[i][READ], buffer, SIZE) != 0) {
-        printf("From Child: %d", buffer);
-        }
+    sleep(1);
+    int results[numFiles];
+    for(int i = 0; i < numFiles; ++i) { 
+        read(parentReadFds[0][READ], buffer, SIZE);
+        results[i] = (int) strtol(buffer, (char **)NULL, 10);
+        fflush(stdout);
+        printf("From Child: %d\n", results[i]);
+        fflush(stdout);
+        close(parentReadFds[0][READ]);      
     }
+  
     
     //read(parentReadFds[0][READ], buffer, SIZE);
    // printf("%s", buffer);
    // close(parentReadFds[0][READ]);
    // close(parentWriteFds[0][WRITE]);
-
-
-    
-   
-
-
 
 
     return 0;
